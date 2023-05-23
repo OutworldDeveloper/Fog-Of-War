@@ -1,0 +1,15 @@
+#pragma kernel CSMain
+
+RWTexture2D<float> Result;
+Texture2D<float> AddedTexture;
+int2 SourcePosition;
+int MaxRevealRadius;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	int2 originTile = SourcePosition - MaxRevealRadius;
+	int2 currentTile = originTile + id.xy;
+
+	Result[currentTile] += AddedTexture[id.xy];
+}

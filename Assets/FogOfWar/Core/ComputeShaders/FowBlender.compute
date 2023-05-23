@@ -1,0 +1,22 @@
+#pragma kernel CSMain
+
+RWTexture2D<float> Result;
+Texture2D<float> DesiredFow; // DesiredFow
+float BlendSpeed;
+float DeltaTime;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	float desiredValue = DesiredFow[id.xy];
+	
+	if (abs(desiredValue - Result[id.xy]) > 0.005f)
+	{
+		float signValue = normalize(desiredValue - Result[id.xy]);
+		Result[id.xy] += signValue * BlendSpeed * DeltaTime;
+	}
+	else
+	{
+		Result[id.xy] = desiredValue;
+	}
+}

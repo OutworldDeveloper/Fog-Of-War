@@ -1,0 +1,69 @@
+#pragma kernel CSMain
+
+RWTexture2D<float> Result;
+Texture2D<float> Walls;
+int MaxRevealRadius;
+float2 SourcePosition;
+float SourceRadius;
+
+bool IsPointInsideCircle(int centerX, int centerY, int x, int y, float radius)
+{
+    float dx = centerX - x;
+    float dy = centerY - y;
+    float distance_squared = dx * dx + dy * dy;
+    return distance_squared <= radius * radius;
+}
+
+bool Raycast(int2 originTile, int2 finalTile)
+{
+	float2 rayOrigin = originTile + float2(0.5, 0.5);
+
+	float2 rayDirection = finalTile + float2(0.5, 0.5) - rayOrigin;
+	rayDirection = normalize(rayDirection);
+	
+	int safety = 0;
+	float currentDistance = 0;
+	int2 currentTile = originTile;
+	
+	while (currentTile.x != finalTile.x || currentTile.y != finalTile.y)
+	{
+		currentTile = floor(rayOrigin + rayDirection * currentDistance);
+		currentDistance += 0.05;
+		
+		bool isWall = Walls[currentTile];
+		
+		if (isWall == true)
+		{
+			return true;
+		}
+		
+		safety++;
+		
+		if (safety > 500)
+		{
+			break;
+		}
+	}
+	
+	return false;
+}
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	int2 originTile = SourcePosition - MaxRevealRadius;
+	int2 currentTile = originTile + id.xy;
+	float finalValue = 0;
+
+	if (IsPointInsideCircle(SourcePosition.x, SourcePosition.y, currentTile.x, currentTile.y, SourceRadius))
+	{
+		bool isVisible = !Raycast(SourcePosition, currentTile); // Could be reversed probably? It is
+		
+		if (isVisible == true)
+		{
+			finalValue = 1;
+		}
+	}
+
+    Result[id.xy] = finalValue;
+}
