@@ -1,22 +1,30 @@
 using System;
 using UnityEngine;
 
-public class FowVisibilityReceiver : MonoBehaviour
+public sealed class FowVisibilityReceiver : MonoBehaviour
 {
 
     public event Action VisionGained;
     public event Action VisionLost;
 
-    [SerializeField] private FogOfWar _fogOfWar;
     [SerializeField] private float _radius;
 
     private float _lastSeenTime;
     public bool IsActuallyVisible { get; private set; } // TODO: Rename
 
+    private void Start()
+    {
+        if (FowManager.HasActiveInstance() == false)
+        {
+            Debug.LogError("There's no active FowManager in the scene.");
+            Debug.DebugBreak();
+        }
+    }
+
     private void Update()
     {
         bool wasActuallyVisible = IsActuallyVisible;
-        bool isVisible = _fogOfWar.SampleVisibility(transform.position, _radius);
+        bool isVisible = FowManager.SampleVisibility(transform.position, _radius);
 
         if (isVisible == true)
         {
@@ -54,7 +62,13 @@ public class FowVisibilityReceiver : MonoBehaviour
                 if (IsPointInsideCircle(intRadius, intRadius, x, y, _radius) == true)
                 {
                     var tilePosition = boundsOriginTile + new Vector2Int(x, y);
-                    var isVisible = _fogOfWar.SampleVisibility(tilePosition);
+
+                    var isVisible = true;
+
+                    if (Application.isPlaying == true)
+                    {
+                        isVisible = FowManager.SampleVisibility(tilePosition);
+                    }
 
                     Gizmos.color = isVisible ? Color.green : Color.red;
                     Vector3 worldPosition = new Vector3(tilePosition.x + 0.5f, 0.0f, tilePosition.y + 0.5f);

@@ -3,8 +3,6 @@
 public sealed class FowRevealer : MonoBehaviour
 {
 
-    [SerializeField] private FogOfWar _fow;
-
     public int Range = 10;
     private IRevealSource _source;
 
@@ -15,7 +13,13 @@ public sealed class FowRevealer : MonoBehaviour
 
     private void Start()
     {
-        _source = _fow.AddSource(transform.position, Range);
+        if (FowManager.HasActiveInstance() == false)
+        {
+            Debug.LogError("There's no active FowManager in the scene.");
+            Debug.DebugBreak();
+        }
+
+        _source = FowManager.AddSource(transform.position, Range);
     }
 
     private void Update()
@@ -26,12 +30,12 @@ public sealed class FowRevealer : MonoBehaviour
 
     private void OnDestroy()
     {
-        _source.Kill();
+        _source?.Kill();
     }
 
     private void OnDisable()
     {
-        _source.Disable();
+        _source?.Disable();
     }
 
 }
